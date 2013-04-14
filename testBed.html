@@ -67,7 +67,8 @@
           FB.login(function(response){}, {scope:"read_stream, publish_actions"});
         }
       })
-      title = document.createElement('img');
+      //after a successful load and login title will fade in.
+      title = document.createElement('img'); 
       title.setAttribute('src', 'assets/Title.png');
       title.id = "title";
       document.getElementById('container').appendChild(title);
@@ -86,37 +87,41 @@
   </script>
 
   <img id = "player" face = "north" src = 'assets/Player0000.png'></img>
-<audio style = "display: none" controls autoplay loop= "loop" autoplay = "autoplay"> <source src="assets/bgm.mp3" type="audio/mpeg"></audio>
+<audio style = "display: none" controls autoplay loop= "loop"
+ autoplay = "autoplay"> <source src="assets/bgm.mp3" type="audio/mpeg"></audio>
 </body>
 
-<script src="jquery-1.9.1.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 
 <script>
 
-  var player = document.getElementById('player');
-  var idlep = setInterval(function() {animate(player)}, 500);
-  var NPCs = document.getElementsByClassName('NPC');
-  var box;
-  var closest; 
-  var headings = ['west', 'east', 'north', 'south'];
-  var posts = [];
+  var player = document.getElementById('player'); //Controlled character
+  var idlep = setInterval(function() {animate(player)}, 500); //interval for player animation
+  var NPCs = document.getElementsByClassName('NPC'); //Live list of NPCs
+  var box; //Text box variable.
+  var closest; //index of closest NPC.
+  var headings = ['west', 'east', 'north', 'south']; //Possible directions
+  var posts = []; //List of loaded Facebook posts
+  var currentPost; //Current Post that is in use.
+
   function square(x){return Math.pow(x, 2);};
   function animate(object){
     var heading = object.getAttribute("face");
-    if(heading == "south" || heading == "north"){
+    //changes sprite based on direction facing and character type.
+    if (heading == "south" || heading == "north"){
       if (object.getAttribute("src") == 'assets/NPC0000.png') {
         object.setAttribute("src", 'assets/NPC0001.png');
       } else if (object.getAttribute("src") == 'assets/NPC0001.png') {
         object.setAttribute("src",'assets/NPC0000.png');
       } else if (object.getAttribute('class') == "NPC"){
         object.setAttribute("src", 'assets/NPC0000.png');
-      }
-      else if (object.getAttribute("src") == 'assets/Player0000.png') {
+      } else if (object.getAttribute("src") == 'assets/Player0000.png') {
         object.setAttribute("src", 'assets/Player0001.png');
       } else if (object.getAttribute("src") == 'assets/Player0001.png') {
         object.setAttribute("src",'assets/Player0000.png');
       } else {
-        object.setAttribute("src", 'assets/Player0000.png');}
+        object.setAttribute("src", 'assets/Player0000.png');
+      }
     }
 
     if(heading == "west" || heading == "east"){
@@ -133,14 +138,14 @@
       } else {object.setAttribute("src", 'assets/PlayerSide0000.png');}
     }
   }
+  //animates each .NPC by iterating through a live list.
   var idleN = setInterval(function() {
-    for (var i = 0; i < NPCs.length; i++){
+    for (var i = 0; i < NPCs.length; i++) {
       NPCs[i].style.zIndex = $(NPCs[i]).position().top -50;
       player.style.zIndex = $(player).position().top;
       animate(NPCs[i]);
     }
   }, 500);
-  var currentPost;
   $(document.body).keydown(function(event){
     var interval = 10
     if(event.keyCode != 123){
@@ -148,6 +153,7 @@
     }
     var pos = $(player).position();
     var keyPress = event.keyCode
+    //Player is deciding whether to like post
     if (box != undefined && box.innerHTML == 'Like post? Y/N.'){ 
       if (keyPress == 89){
         FB.api("/"+currentPost+"/likes", 'post', function(response){
@@ -164,39 +170,55 @@
       }
       return;
     }
+    //Player presses right
     else if(keyPress == 39){
       player.setAttribute("face", "east"); 
       animate(player);
       player.style.left = interval + pos.left;
     }
+    //Player presses left
     else if(keyPress == 37){
       player.setAttribute("face", "west"); 
       animate(player);
       player.style.left = pos.left - interval;
     }
+    //Player presses down
     else if(keyPress == 40){
       player.setAttribute("face", "south");
       animate(player);
       player.style.top = interval + pos.top;
     }
+    //Player presses up
     else if(keyPress == 38){
       player.setAttribute("face", "north")
       animate(player);
       player.style.top = pos.top - interval;
     }
+    //Player presses space bar
     else if(keyPress == 32){
+      //Is it the beginning of the game?
       if (title != undefined){
         $(title).fadeOut("slow");
         populate();
-        setTimeout(function(){populate();}, 3000);
         title = undefined;
+        writeInstruct();
         return;
       }
       if (box != undefined){
+        //Are instructions displayed?
+        if(box.innerHTML == "Arrow Keys: Move</br>Space: Interact/Advance</br>
+           Disclaimer: I am not responsible for any unwarranted likes."){
+          box.remove();
+          box = undefined;
+          setTimeout(function(){populate();}, 3000);
+          return;
+        }
+        //Player agrees to like post
         if (box.innerHTML == "'And so it shall be.'"){
           removeBox();
           return;
         }
+        //Player is given option to like displayed post
         box.innerHTML = 'Like post? Y/N.';
         return;
         //removeBox();
@@ -205,6 +227,7 @@
       var closestDist = 100000000;
       for (var i = 0; i < NPCs.length; i++){
         var nPos = $(NPCs[i]).position();
+        //Following if's filter out NPC's not in general facing direction
         if (nPos.left >= pos.left && heading =="west"){
           continue;
         }
@@ -218,9 +241,10 @@
           continue;
         }
         var dist = Math.sqrt(square(nPos.left-pos.left)+square((nPos.top*1.32)
-                   -(pos.top*1.32)));
+                   -(pos.top*1.32))); //Calculate distance from head to head
+                                      //1.32 compensates for total img size
         console.log(dist);
-        if (dist <= 100){
+        if (dist <= 100){ //Threshold for triggering post
           if (dist < closestDist){
             closest = i;
           }
@@ -231,7 +255,8 @@
         box.id = 'textBox';
         box.style.width = window.innerWidth-30;
         var name;
-        if (posts.length == 0){
+        closestDist = 1000000; //Reset closest distance counted
+        if (posts.length == 0){ //If no more posts, load more.
           FB.api('me/home?until=now&fields=message', function(response){
             console.log(response);
             posts = response.data;
@@ -240,11 +265,11 @@
         }
         else{
           writeBox();
-          closest = undefined;
         }
       }
     }
   });
+  //Generates a text box with first post in posts array
   function writeBox(){
     var curr = posts.shift();
     while (curr.message == undefined){
@@ -255,14 +280,26 @@
     document.getElementById('container').appendChild(box);
     return;
   }
+  //Removes text box as well as removes NPC talked to
   function removeBox(){
     box.remove();
     box = undefined;
     $(NPCs[closest]).fadeTo('fast', 0, function(){NPCs[closest].remove()});
     makePerson();
+    closest = undefined;
     currentPost = undefined;
     return;
   }
+  //Generates a box filled with instructions on how to play
+  function writeInstruct(){
+    box = document.createElement('div');
+    box.id = 'textBox';
+    box.style.width = window.innerWidth-30;
+    box.innerHTML = "Arrow Keys: Move</br>Space: Interact/Advance</br>
+           Disclaimer: I am not responsible for any unwarranted likes.";
+    document.getElementById('container').appendChild(box);
+  }
+  //Randomly place an NPC facing any direction;
   function makePerson(){
     var person = document.createElement('img');
     person.setAttribute("class", "NPC");  
@@ -272,7 +309,7 @@
     document.getElementById("container").appendChild(person);
     $(person).fadeIn("slow");  
   }
-
+  //Lazy function for creating 5 NPC's in a row
   function populate(){
     setTimeout(function(){
         setTimeout(function(){
