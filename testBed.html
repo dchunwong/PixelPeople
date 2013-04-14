@@ -1,5 +1,9 @@
 <META HTTP-EQUIV="EXPIRES" CONTENT= 0>
 <title> PixelPeople </title>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<link rel="icon" 
+      type="image/ico" 
+      href="assets/flame.ico">
 <link href='http://fonts.googleapis.com/css?family=VT323' rel='stylesheet'
   type='text/css'>
 <style>
@@ -54,6 +58,8 @@
 
   <script>
     var title;
+    var posts = []; //List of loaded Facebook posts
+    var next; //next page of posts;
     window.fbAsyncInit = function() {
       // init the FB JS SDK
       FB.init({
@@ -67,7 +73,7 @@
           FB.login(function(response){}, {scope:"read_stream, publish_actions"});
         }
       })
-      //after a successful load and login title will fade in.
+      //after a successful load of api posts will load and login title will fade in.
       title = document.createElement('img'); 
       title.setAttribute('src', 'assets/Title.png');
       title.id = "title";
@@ -87,11 +93,11 @@
   </script>
 
   <img id = "player" face = "north" src = 'assets/Player0000.png'></img>
-<audio style = "display: none" controls autoplay loop= "loop"
- autoplay = "autoplay"> <source src="assets/bgm.mp3" type="audio/mpeg"></audio>
+  <a href="http://dchunwong.com/projects" style ="text-decoration: none; color: #444">Back</a>
+<audio id="auto" style = "display: none" controls autoplay loop= "loop"
+ autoplay = "autoplay"> <source id="source" src="assets/bgm.mp3" type="audio/mpeg"></audio>
 </body>
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 
 <script>
 
@@ -101,8 +107,8 @@
   var box; //Text box variable.
   var closest; //index of closest NPC.
   var headings = ['west', 'east', 'north', 'south']; //Possible directions
-  var posts = []; //List of loaded Facebook posts
   var currentPost; //Current Post that is in use.
+  var pos; //position of player
 
   function square(x){return Math.pow(x, 2);};
   function animate(object){
@@ -138,6 +144,7 @@
       } else {object.setAttribute("src", 'assets/PlayerSide0000.png');}
     }
   }
+
   //animates each .NPC by iterating through a live list.
   var idleN = setInterval(function() {
     for (var i = 0; i < NPCs.length; i++) {
@@ -146,16 +153,37 @@
       animate(NPCs[i]);
     }
   }, 500);
+  $(document.body).click(function(e){
+    player.style.top = e.pageY - 32;
+    player.style.left = e.pageX;
+  })
+
+  $('.NPC').click(function(e){
+    console.log(e);
+    var nPos = $(this).position();
+    var dist = Math.sqrt(square(nPos.left-pos.left)+square((nPos.top*1.32)
+                   -(pos.top*1.32)));
+    if(dist <= 100){
+      for (var i = 0; i < 0; i++) {
+        if (NPCs[i] == this){
+          closest = i;
+          break;
+        }
+      };
+    }
+    writeBox();
+  })
+  //Key press handler
   $(document.body).keydown(function(event){
     var interval = 10
     if(event.keyCode != 123){
       event.preventDefault();
     }
-    var pos = $(player).position();
+    pos = $(player).position();
     var keyPress = event.keyCode
     //Player is deciding whether to like post
     if (box != undefined && box.innerHTML == 'Like post? Y/N.'){ 
-      if (keyPress == 89){
+      if (keyPress == 89){ //Y
         FB.api("/"+currentPost+"/likes", 'post', function(response){
           console.log(response);
           if(response == true){
@@ -165,10 +193,25 @@
         })
         return;
       }
-      else if (keyPress == 78){
+      else if (keyPress == 78){ //N
         removeBox();
       }
       return;
+    }
+    else if(keyPress == 192){
+      if (document.getElementById('source').getAttribute("src") == 'assets/bgm.mp3'){
+        document.getElementById('source').setAttribute("src", 'assets/bgm2.mp3');
+      }
+      else {
+        document.getElementById('source').setAttribute("src", 'assets/bgm.mp3');
+      }
+      var audio = document.getElementById('auto');
+      audio.load();
+      audio.play();
+    }
+    //Display Controls on / press.
+    else if(keyPress == 191 && box == undefined){
+      writeInstruct();
     }
     //Player presses right
     else if(keyPress == 39){
@@ -199,18 +242,23 @@
       //Is it the beginning of the game?
       if (title != undefined){
         $(title).fadeOut("slow");
-        populate();
         title = undefined;
         writeInstruct();
         return;
       }
       if (box != undefined){
         //Are instructions displayed?
-        if(box.innerHTML == "Arrow Keys: Move</br>Space: Interact/Advance</br>
-           Disclaimer: I am not responsible for any unwarranted likes."){
+        if(box.innerHTML == "Arrow Keys: Move | Space: Interact | Disclaimer: I am not responsible for any unwarranted likes | Press '/' to view these again"){
+          FB.api('me/home?fields=message', function(response){
+            console.log(response);
+            posts = response.data;
+            next = response.paging.next;
+          })
           box.remove();
           box = undefined;
-          setTimeout(function(){populate();}, 3000);
+          if(NPCs.length == 0){
+            setTimeout(function(){populate();}, 3000);
+          }
           return;
         }
         //Player agrees to like post
@@ -251,30 +299,25 @@
         }
       }
       if(closest != undefined){
+        lazyLoad();
         box = document.createElement('div');
         box.id = 'textBox';
         box.style.width = window.innerWidth-30;
         var name;
         closestDist = 1000000; //Reset closest distance counted
-        if (posts.length == 0){ //If no more posts, load more.
-          FB.api('me/home?until=now&fields=message', function(response){
-            console.log(response);
-            posts = response.data;
-            writeBox();
-          });
-        }
-        else{
-          writeBox();
-        }
+        writeBox();
       }
     }
+    player.zIndex = player.top;
   });
   //Generates a text box with first post in posts array
   function writeBox(){
     var curr = posts.shift();
     while (curr.message == undefined){
       curr = posts.shift();
+      lazyLoad();
     }
+    lazyLoad();
     currentPost = curr.id;
     box.innerHTML = curr.message;
     document.getElementById('container').appendChild(box);
@@ -284,9 +327,9 @@
   function removeBox(){
     box.remove();
     box = undefined;
-    $(NPCs[closest]).fadeTo('fast', 0, function(){NPCs[closest].remove()});
+    $(NPCs[closest]).fadeTo('fast', 0, function(){NPCs[closest].remove();    
+                                                  closest = undefined;});
     makePerson();
-    closest = undefined;
     currentPost = undefined;
     return;
   }
@@ -295,16 +338,17 @@
     box = document.createElement('div');
     box.id = 'textBox';
     box.style.width = window.innerWidth-30;
-    box.innerHTML = "Arrow Keys: Move</br>Space: Interact/Advance</br>
-           Disclaimer: I am not responsible for any unwarranted likes.";
+    box.innerHTML = "Arrow Keys: Move | Space: Interact | Disclaimer: I am not responsible for any unwarranted likes | Press '/' to view these again";
     document.getElementById('container').appendChild(box);
   }
   //Randomly place an NPC facing any direction;
   function makePerson(){
     var person = document.createElement('img');
     person.setAttribute("class", "NPC");  
-    person.style.left = Math.round((Math.random()*(window.innerWidth-51))/51)*51;
-    person.style.top = Math.round((Math.random()*(window.innerHeight-51))/51)*51;
+    person.style.left = Math.round((Math.random()*(window.innerWidth-51)
+                                    )/51)*51;
+    person.style.top = Math.round((Math.random()*(window.innerHeight-51)
+                                    )/51)*51;
     person.setAttribute("face", headings[Math.floor((Math.random()*4))]);
     document.getElementById("container").appendChild(person);
     $(person).fadeIn("slow");  
@@ -328,5 +372,13 @@
             }, 500)
         }, 500)
       }, 0);
+  }
+  function lazyLoad(){
+    if (posts.length == 0){ //If no more posts, load more.
+      FB.api(next+'&fields=message', function(response){
+        posts = response.data;
+        next = response.paging.next;
+      });
+    }
   }
 </script>
