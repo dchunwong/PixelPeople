@@ -94,8 +94,8 @@
 
   <img id = "player" face = "north" src = 'assets/Player0000.png'></img>
   <a href="http://dchunwong.com/projects" style ="text-decoration: none; color: #444">Back</a>
-<audio id="auto" style = "display: none" controls autoplay loop= "loop"
- autoplay = "autoplay"> <source id="source" src="assets/bgm.mp3" type="audio/mpeg"></audio>
+<!-- <audio id="auto" style = "display: none" controls autoplay loop= "loop"
+ autoplay = "autoplay"> <source id="source" src="assets/bgm.mp3" type="audio/mpeg"></audio> -->
 </body>
 
 
@@ -182,7 +182,7 @@
     pos = $(player).position();
     var keyPress = event.keyCode
     //Player is deciding whether to like post
-    if (box != undefined && box.innerHTML == 'Like post? Y/N.'){ 
+    if (box != undefined && box.innerHTML == 'Did you enjoy your chat? Y/N.'){ 
       if (keyPress == 89){ //Y
         FB.api("/"+currentPost+"/likes", 'post', function(response){
           console.log(response);
@@ -257,7 +257,7 @@
           box.remove();
           box = undefined;
           if(NPCs.length == 0){
-            setTimeout(function(){populate();}, 3000);
+            setTimeout(function(){populate(); populate(); populate()}, 3000);
           }
           return;
         }
@@ -267,7 +267,7 @@
           return;
         }
         //Player is given option to like displayed post
-        box.innerHTML = 'Like post? Y/N.';
+        box.innerHTML = 'Did you enjoy your chat? Y/N.';
         return;
         //removeBox();
       }
@@ -313,6 +313,10 @@
   //Generates a text box with first post in posts array
   function writeBox(){
     var curr = posts.shift();
+    if (curr == undefined){
+      lazyLoad();
+      curr = posts.shift();
+    }
     while (curr.message == undefined){
       curr = posts.shift();
       lazyLoad();
