@@ -60,42 +60,17 @@
     var title;
     var posts = []; //List of loaded Facebook posts
     var next; //next page of posts;
-    window.fbAsyncInit = function() {
-      // init the FB JS SDK
-      FB.init({
-        appId      : 509402089096990,                        // App ID from the app dashboard
-        status     : true,                                 // Check Facebook Login status
-        xfbml      : true                                  // Look for social plugins on the page
-      });
-      console.log('api loaded!');
-      FB.getLoginStatus(function(response) {
-        if(response.status != 'connected'){
-          FB.login(function(response){}, {scope:"read_stream, publish_actions"});
-        }
-      })
-      //after a successful load of api posts will load and login title will fade in.
-      title = document.createElement('img'); 
-      title.setAttribute('src', 'assets/Title.png');
-      title.id = "title";
-      document.getElementById('container').appendChild(title);
-      $(title).fadeIn("slow");
-      // read_stream initialization code such as adding Event Listeners goes here
-    };
-
-    // Load the SDK asynchronously
-    (function(d, s, id){
-       var js, fjs = d.getElementsByTagName(s)[0];
-       if (d.getElementById(id)) {return;}
-       js = d.createElement(s); js.id = id;
-       js.src = "http://connect.facebook.net/en_US/all.js";
-       fjs.parentNode.insertBefore(js, fjs);
-     }(document, 'script', 'facebook-jssdk'));
+    title = document.createElement('img'); 
+    title.setAttribute('src', 'assets/Title.png');
+    title.id = "title";
+    document.getElementById('container').appendChild(title);
+    $(title).fadeIn("slow");
   </script>
 
   <img id = "player" face = "north" src = 'assets/Player0000.png'></img>
   <a href="http://dchunwong.com/projects" style ="text-decoration: none; color: #444">Back</a>
-<!-- <audio id="auto" style = "display: none" controls autoplay loop= "loop"
- autoplay = "autoplay"> <source id="source" src="assets/bgm.mp3" type="audio/mpeg"></audio> -->
+<audio id="auto" style = "display: none" controls autoplay loop= "loop"
+ autoplay = "autoplay"> <source id="source" src="assets/bgm.mp3" type="audio/mpeg"></audio>
 </body>
 
 
@@ -242,6 +217,32 @@
       //Is it the beginning of the game?
       if (title != undefined){
         $(title).fadeOut("slow");
+
+        window.fbAsyncInit = function() {
+          // init the FB JS SDK
+          FB.init({
+            appId      : 509402089096990,                        // App ID from the app dashboard
+            status     : true,                                 // Check Facebook Login status
+            xfbml      : true                                  // Look for social plugins on the page
+          });
+          console.log('api loaded!');
+          FB.getLoginStatus(function(response) {
+            if(response.status != 'connected'){
+              FB.login(function(response){}, {scope:"read_stream, publish_actions"});
+            }
+          })
+          // read_stream initialization code such as adding Event Listeners goes here
+        };
+
+        // Load the SDK asynchronously
+        (function(d, s, id){
+           var js, fjs = d.getElementsByTagName(s)[0];
+           if (d.getElementById(id)) {return;}
+           js = d.createElement(s); js.id = id;
+           js.src = "http://connect.facebook.net/en_US/all.js";
+           fjs.parentNode.insertBefore(js, fjs);
+         }(document, 'script', 'facebook-jssdk'));
+        
         title = undefined;
         writeInstruct();
         return;
