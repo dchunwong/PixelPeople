@@ -99,7 +99,7 @@
      }(document, 'script', 'facebook-jssdk'));
   </script>
 
-  <img id = "player" face = "north" src = 'assets/Player0000.png'></img>
+  <img id = "player" face = "north" src = 'assets/Player.gif'></img>
   <a href="http://dchunwong.com/projects" style ="text-decoration: none; color: #444">Back</a>
 <audio id="auto" style = "display: none" controls autoplay loop= "loop"
  autoplay = "autoplay"> <source id="source" src="assets/bgm.mp3" type="audio/mpeg"></audio>
@@ -109,7 +109,6 @@
 <script>
 
   var player = document.getElementById('player'); //Controlled character
-  var idlep = setInterval(function() {animate(player)}, 500); //interval for player animation
   var NPCs = document.getElementsByClassName('NPC'); //Live list of NPCs
   var box; //Text box variable.
   var closest; //index of closest NPC.
@@ -122,44 +121,20 @@
     var heading = object.getAttribute("face");
     //changes sprite based on direction facing and character type.
     if (heading == "south" || heading == "north"){
-      if (object.getAttribute("src") == 'assets/NPC0000.png') {
-        object.setAttribute("src", 'assets/NPC0001.png');
-      } else if (object.getAttribute("src") == 'assets/NPC0001.png') {
-        object.setAttribute("src",'assets/NPC0000.png');
-      } else if (object.getAttribute('class') == "NPC"){
-        object.setAttribute("src", 'assets/NPC0000.png');
-      } else if (object.getAttribute("src") == 'assets/Player0000.png') {
-        object.setAttribute("src", 'assets/Player0001.png');
-      } else if (object.getAttribute("src") == 'assets/Player0001.png') {
-        object.setAttribute("src",'assets/Player0000.png');
-      } else {
-        object.setAttribute("src", 'assets/Player0000.png');
-      }
+      object.src = "assets/NPC.gif"
     }
 
     if(heading == "west" || heading == "east"){
-      if (object.getAttribute("src") == 'assets/NPCSide0000.png') {
-        object.setAttribute("src", 'assets/NPCSide0001.png');
-      } else if (object.getAttribute("src") == 'assets/NPCSide0001.png') {
-        object.setAttribute("src",'assets/NPCSide0000.png');
-      } else if (object.getAttribute('class') == "NPC"){
-        object.setAttribute("src", 'assets/NPCSide0000.png');
-      } else if (object.getAttribute("src") == 'assets/PlayerSide0000.png') {
-        object.setAttribute("src", 'assets/PlayerSide0001.png');
-      } else if (object.getAttribute("src") == 'assets/PlayerSide0001.png') {
-        object.setAttribute("src",'assets/PlayerSide0000.png');
-      } else {object.setAttribute("src", 'assets/PlayerSide0000.png');}
+      object.src = "assets/NPCSide.gif"
     }
   }
 
   //animates each .NPC by iterating through a live list.
-  var idleN = setInterval(function() {
-    for (var i = 0; i < NPCs.length; i++) {
-      NPCs[i].style.zIndex = $(NPCs[i]).position().top -50;
-      player.style.zIndex = $(player).position().top;
-      animate(NPCs[i]);
-    }
-  }, 500);
+  for (var i = 0; i < NPCs.length; i++) {
+    NPCs[i].style.zIndex = $(NPCs[i]).position().top -50;
+    player.style.zIndex = $(player).position().top;
+    animate(NPCs[i]);
+  }
   $(document.body).click(function(e){
     player.style.top = e.pageY - 32;
     player.style.left = e.pageX;
@@ -183,6 +158,7 @@
   //Key press handler
   $(document.body).keydown(function(event){
     var interval = 10
+    var heading = player.getAttribute("face");
     if(event.keyCode != 123){
       event.preventDefault();
     }
@@ -195,22 +171,22 @@
           console.log(response);
           if(response == true){
             console.log("success");
-            box.innerHTML = "'And so it shall be.'"
+            box.innerHTML = "'And so it shall be.'";
           }
         })
         return;
       }
       else if (keyPress == 78){ //N
-        removeBox();
+        box.innerHTML ="'...is that so?'";
       }
       return;
     }
     else if(keyPress == 192){
-      if (document.getElementById('source').getAttribute("src") == 'assets/bgm.mp3'){
-        document.getElementById('source').setAttribute("src", 'assets/bgm2.mp3');
+      if (document.getElementById('source').src == 'assets/bgm.mp3'){
+        document.getElementById('source').src = 'assets/bgm2.mp3';
       }
       else {
-        document.getElementById('source').setAttribute("src", 'assets/bgm.mp3');
+        document.getElementById('source').src = 'assets/bgm.mp3';
       }
       var audio = document.getElementById('auto');
       audio.load();
@@ -222,26 +198,34 @@
     }
     //Player presses right
     else if(keyPress == 39){
-      player.setAttribute("face", "east"); 
-      animate(player);
+      if(heading != "east"){
+        player.setAttribute("face", "east"); 
+        player.src = "assets/PlayerSide.gif";
+      }
       player.style.left = interval + pos.left;
     }
     //Player presses left
     else if(keyPress == 37){
-      player.setAttribute("face", "west"); 
-      animate(player);
+      if(heading != "west"){
+        player.setAttribute("face", "west"); 
+        player.src = "assets/PlayerSide.gif";
+      }
       player.style.left = pos.left - interval;
     }
     //Player presses down
     else if(keyPress == 40){
-      player.setAttribute("face", "south");
-      animate(player);
+      if(heading != "south"){
+        player.setAttribute("face", "south");
+        player.src = "assets/Player.gif";
+      }
       player.style.top = interval + pos.top;
     }
     //Player presses up
     else if(keyPress == 38){
-      player.setAttribute("face", "north")
-      animate(player);
+      if(heading != "north"){
+        player.setAttribute("face", "north")
+        player.src = "assets/Player.gif";
+      }
       player.style.top = pos.top - interval;
     }
     //Player presses space bar
